@@ -46,3 +46,29 @@ export async function POST(req: NextRequest) {
 
   return NextResponse.json({ queryCluster: data }, { status: 201 });
 }
+
+// GET /api/query-clusters?brandId=... — list a brand's query clusters
+export async function GET(req: NextRequest) {
+  const brandId = req.nextUrl.searchParams.get("brandId");
+
+  if (!brandId) {
+    return NextResponse.json({ error: "brandId query param is required" }, { status: 400 });
+  }
+
+  if (!isValidUuid(brandId)) {
+    return NextResponse.json({ error: "brandId must be a valid UUID" }, { status: 400 });
+  }
+
+  const supabase = getServiceClient();
+  const { data, error } = await supabase
+    .from("query_clusters")
+    .select("*")
+    .eq("brand_id", brandId)
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+
+  return NextResponse.json({ queryClusters: data });
+}
